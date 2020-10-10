@@ -82,7 +82,7 @@ def run_epoch(model, dataloader, optimizer=None):
             optimizer.step()
 
         loss_meter.update(loss.cpu().item(), left.size(0))
-        acc = (score.argmax(dim=1) == label).float().cpu().item()
+        acc = (score.argmax(dim=1) == label).float().cpu().mean().item()
         acc_meter.update(acc, left.size(0))
 
     return loss_meter.avg, acc_meter.avg
