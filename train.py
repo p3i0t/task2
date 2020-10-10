@@ -25,9 +25,9 @@ def ReadPairs(filename):
 
 
 class ComposedModel(nn.Module):
-    def __init__(self, feature_net, metric_net):
-        self.feature_net = feature_net
-        self.metric_net = metric_net
+    def __init__(self):
+        self.feature_net = FeatureNet()
+        self.metric_net = MetricNet()
 
     def forward(self, left, right):
         left = self.feature_net(left)
@@ -116,9 +116,7 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False,
                              num_workers=8, pin_memory=True, drop_last=True)
 
-    feature_net = FeatureNet()
-    metric_net = MetricNet()
-    model = ComposedModel(feature_net=feature_net, metric_net=metric_net).cuda()
+    model = ComposedModel().cuda()
 
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
