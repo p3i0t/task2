@@ -26,8 +26,8 @@ def ReadPairs(filename):
 
 class ComposedModel(nn.Module):
     def __init__(self, feature_net, metric_net):
-        self.feature_net = feature_net()
-        self.metric_net = metric_net()
+        self.feature_net = feature_net
+        self.metric_net = metric_net
 
     def forward(self, left, right):
         left = self.feature_net(left)
@@ -105,18 +105,18 @@ if __name__ == "__main__":
     # prepare train set
     pair_filename = os.path.join(args.train_set, 'm50_{}_{}_0.txt'.format(args.n_samples, args.n_samples))
     pairs, labels = ReadPairs(pair_filename)
-    train_set = Dataset(pairs, labels, args.train_set)
+    train_set = CustomDataset(pairs, labels, args.train_set)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True,
                               num_workers=8, pin_memory=True, drop_last=True)
 
     # prepare test set
     pair_filename = os.path.join(args.test_set, 'm50_{}_{}_0.txt'.format(args.n_samples, args.n_samples))
     pairs, labels = ReadPairs(pair_filename)
-    test_set = Dataset(pairs, labels, args.test_set)
+    test_set = CustomDataset(pairs, labels, args.test_set)
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False,
                              num_workers=8, pin_memory=True, drop_last=True)
 
-    model = ComposedModel(feature_net=FeatureNet, metric_net=MetricNet).cuda()
+    model = ComposedModel(feature_net=FeatureNet(), metric_net=MetricNet()).cuda()
 
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
