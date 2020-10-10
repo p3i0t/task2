@@ -75,7 +75,7 @@ def run_epoch(model, dataloader, optimizer=None):
         score = model(left, right)
         if optimizer:
             optimizer.zero_grad()
-        loss = F.cross_entropy(score, labels)
+        loss = F.cross_entropy(score, label)
 
         if optimizer:
             loss.backward()
