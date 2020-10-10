@@ -14,8 +14,11 @@ class FeatureNet(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             nn.Conv2d(64, 96, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
             nn.Conv2d(96, 96, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
             nn.Conv2d(96, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             nn.Flatten(),   # flatten directly without bottleneck 
         )
