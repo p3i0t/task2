@@ -26,6 +26,8 @@ def ReadPairs(filename):
 
 class ComposedModel(nn.Module):
     def __init__(self):
+        super().__init__()
+        
         self.feature_net = FeatureNet()
         self.metric_net = MetricNet()
 
