@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class FeatureNet(nn.Module):
     def __init__(self):
-        super().__init__()
+        super(FeatureNet, self).__init__()
 
         self.f = nn.Sequential(
             nn.Conv2d(1, 24, kernel_size=7, stride=1, padding=3),
@@ -27,7 +27,7 @@ class FeatureNet(nn.Module):
 
 class MetricNet(nn.Module):
     def __init__(self, in_dim=4096):
-        super().__init__()
+        super(MetricNet, self).__init__()
 
         self.fc = nn.Sequential(
             nn.Linear(in_dim * 2, 512),
