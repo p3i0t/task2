@@ -94,14 +94,16 @@ if __name__ == "__main__":
                         default='liberty', help="data directory.")
     parser.add_argument("--test_set", type=str,
                         default='notredame', help="data directory.")
-    parser.add_argument("--n_samples", type=int,
-                        default=100000, help="number of samples for training and testing.")
+    parser.add_argument("--n_samples_train", type=int,
+                        default=500000, help="number of samples for training.")
+    parser.add_argument("--n_samples_test", type=int,
+                        default=100000, help="number of samples for testing.")
     parser.add_argument("--n_epochs", type=int,
                         default=100, help="number of training epochs.")
 
     # Optimization hyperparams:
     parser.add_argument("--batch_size", type=int,
-                        default=100, help="Minibatch size")
+                        default=32, help="Minibatch size")
     parser.add_argument("--optimizer", type=str,
                         default="adaw", help="adam or adamw")
     parser.add_argument("--lr", type=float, default=0.001,
@@ -109,17 +111,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # prepare train set
-    pair_filename = os.path.join(args.train_set, 'm50_{}_{}_0.txt'.format(args.n_samples, args.n_samples))
+    pair_filename = os.path.join(args.train_set, 'm50_{}_{}_0.txt'.format(args.n_samples_train, args.n_samples_train))
     pairs, labels = ReadPairs(pair_filename)
     train_set = CustomDataset(pairs, labels, args.train_set)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True,
                               num_workers=8, pin_memory=True, drop_last=True)
 
     # prepare test set
-    pair_filename = os.path.join(args.test_set, 'm50_{}_{}_0.txt'.format(args.n_samples, args.n_samples))
+    pair_filename = os.path.join(args.test_set, 'm50_{}_{}_0.txt'.format(args.n_samples_test, args.n_samples_test))
     pairs, labels = ReadPairs(pair_filename)
     test_set = CustomDataset(pairs, labels, args.test_set)
-    test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False,
+    test_loader = DataLoader(test_set, batch_size=100, shuffle=False,
                              num_workers=8, pin_memory=True, drop_last=True)
 
     model = ComposedModel().cuda()
