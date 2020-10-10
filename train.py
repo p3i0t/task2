@@ -27,7 +27,7 @@ def ReadPairs(filename):
 class ComposedModel(nn.Module):
     def __init__(self):
         super().__init__()
-        
+
         self.feature_net = FeatureNet()
         self.metric_net = MetricNet()
 
@@ -52,7 +52,7 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         pair = self.pairs[idx]
         label = self.labels[idx]
-        return self.images[pair[0]], self.images[pair[1]], label
+        return self.images[int(pair[0])], self.images[int(pair[1])], label
 
 
 def run_epoch(model, dataloader, optimizer=None):
