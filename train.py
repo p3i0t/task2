@@ -116,7 +116,9 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False,
                              num_workers=8, pin_memory=True, drop_last=True)
 
-    model = ComposedModel(feature_net=FeatureNet(), metric_net=MetricNet()).cuda()
+    feature_net = FeatureNet()
+    metric_net = MetricNet()
+    model = ComposedModel(feature_net=feature_net, metric_net=metric_net).cuda()
 
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
