@@ -55,6 +55,10 @@ class CustomDataset(Dataset):
         return self.images[int(pair[0])], self.images[int(pair[1])], label
 
 
+def preprocess(x):
+    return (x.float() - 128) / 160  # from original paper.
+
+
 def run_epoch(model, dataloader, optimizer=None):
     if optimizer is None:
         model.eval()  # evaluation mode
@@ -64,8 +68,8 @@ def run_epoch(model, dataloader, optimizer=None):
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
     for idx, (left, right, label) in enumerate(dataloader):
-        left = left.cuda()
-        right = right.cuda()
+        left = preprocess(left).cuda()
+        right = preprocess(right).cuda()
         label = label.cuda()
 
         score = model(left, right)
