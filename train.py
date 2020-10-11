@@ -29,7 +29,7 @@ class ComposedModel(nn.Module):
         super().__init__()
         if residual:
             self.feature_net = ResFeatureNet()
-            self.metric_net = MetricNet(in_dim=256)
+            self.metric_net = MetricNet(in_dim=512)
         else:
             self.feature_net = FeatureNet()
             self.metric_net = MetricNet(in_dim=4096)
@@ -148,6 +148,7 @@ if __name__ == "__main__":
 
     model = ComposedModel(residual=args.res_feature_net).cuda()
 
+    print('Model parameters: {}'.format(cal_parameters(model)))
     if args.eval:
         if args.res_feature_net:
             state_dict = torch.load('res_model_{}.pt'.format(args.train_set))

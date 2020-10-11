@@ -32,6 +32,7 @@ class ResFeatureNet(nn.Module):
         self.res2 = BasicBlock(32, 64, stride=2)
         self.res3 = BasicBlock(64, 128, stride=2)
         self.res4 = BasicBlock(128, 256, stride=2)
+        self.res5 = BasicBlock(256, 512, stride=2)
         self.avg_pool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
 
     def forward(self, x):
@@ -39,6 +40,7 @@ class ResFeatureNet(nn.Module):
         o = self.res2(o)
         o = self.res3(o)
         o = self.res4(o)
+        o = self.res5(o)
         o = self.avg_pool(o)
         return o.view(o.size(0), -1)
 
@@ -70,15 +72,15 @@ class FeatureNet(nn.Module):
 
 
 class MetricNet(nn.Module):
-    def __init__(self, in_dim=4096):
+    def __init__(self, in_dim=4096, hidden_size=512):
         super(MetricNet, self).__init__()
 
         self.fc = nn.Sequential(
-            nn.Linear(in_dim * 2, 512),
+            nn.Linear(in_dim * 2, hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 512),
+            nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
-            nn.Linear(512, 2)
+            nn.Linear(hidden_size, 2)
         )
 
     def forward(self, x):
