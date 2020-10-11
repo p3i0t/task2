@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import AdamW, Adam
+from torchvision import transforms
 from models import FeatureNet, MetricNet
 from utils import AverageMeter, ErrorRateAt95Recall
 
@@ -40,11 +41,12 @@ class ComposedModel(nn.Module):
 
 
 class CustomDataset(Dataset):
-    def __init__(self, pairs, labels, dataset='yosemite'):
+    def __init__(self, pairs, labels, dataset='yosemite', transform=None):
         super().__init__()
         self.pairs = pairs
         self.labels = labels
         self.images = np.load('{}.npz'.format(dataset))['img']
+        self.transform = transform
 
     def __len__(self):
         return len(self.pairs)
@@ -52,7 +54,12 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         pair = self.pairs[idx]
         label = self.labels[idx]
-        return self.images[int(pair[0])], self.images[int(pair[1])], label
+        left = self.images[int(pair[0])]
+        right = self.images[int(pair[1])]
+        if self.transform:
+            left = self.transform(left)
+            right = self.transform(right)
+        return left, right, label
 
 
 def preprocess(x):
@@ -115,23 +122,37 @@ if __name__ == "__main__":
                         help="Base learning rate")
     args = parser.parse_args()
 
+    train_transform = transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.RandomCrop(64, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))  # 1-channel, scale to [-1, 1]
+        ])
+
+    test_transform = transforms.Compose([
+        transforms.Resize((64, 64)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))  # 1-channel, scale to [-1, 1]
+        ])
+
     # prepare train set
     pair_filename = os.path.join(args.train_set, 'm50_{}_{}_0.txt'.format(args.n_samples_train, args.n_samples_train))
     pairs, labels = ReadPairs(pair_filename)
-    train_set = CustomDataset(pairs, labels, args.train_set)
+    train_set = CustomDataset(pairs, labels, args.train_set, transform=train_transform)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True,
                               num_workers=8, pin_memory=True, drop_last=True)
-    
+
     pair_filename = os.path.join(args.valid_set, 'm50_{}_{}_0.txt'.format(args.n_samples_test, args.n_samples_test))
     pairs, labels = ReadPairs(pair_filename)
-    valid_set = CustomDataset(pairs, labels, args.valid_set)
+    valid_set = CustomDataset(pairs, labels, args.valid_set, transform=test_transform)
     valid_loader = DataLoader(valid_set, batch_size=100, shuffle=False,
                               num_workers=8, pin_memory=True, drop_last=True)
 
     # prepare test set
     pair_filename = os.path.join(args.test_set, 'm50_{}_{}_0.txt'.format(args.n_samples_test, args.n_samples_test))
     pairs, labels = ReadPairs(pair_filename)
-    test_set = CustomDataset(pairs, labels, args.test_set)
+    test_set = CustomDataset(pairs, labels, args.test_set, transform=test_transform)
     test_loader = DataLoader(test_set, batch_size=100, shuffle=False,
                              num_workers=8, pin_memory=True, drop_last=True)
 
