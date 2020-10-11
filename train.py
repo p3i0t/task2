@@ -29,7 +29,7 @@ class ComposedModel(nn.Module):
         super().__init__()
         if residual:
             self.feature_net = ResFeatureNet()
-            self.metric_net = MetricNet(in_dim=512)
+            self.metric_net = MetricNet(in_dim=2048)
         else:
             self.feature_net = FeatureNet()
             self.metric_net = MetricNet(in_dim=4096)

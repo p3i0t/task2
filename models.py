@@ -33,7 +33,7 @@ class ResFeatureNet(nn.Module):
         self.res3 = BasicBlock(64, 128, stride=2)
         self.res4 = BasicBlock(128, 256, stride=2)
         self.res5 = BasicBlock(256, 512, stride=2)
-        self.avg_pool = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+        self.flatten = nn.Flatten()
 
     def forward(self, x):
         o = self.res1(x)
@@ -41,8 +41,8 @@ class ResFeatureNet(nn.Module):
         o = self.res3(o)
         o = self.res4(o)
         o = self.res5(o)
-        o = self.avg_pool(o)
-        return o.view(o.size(0), -1)
+        o = self.flatten(o)
+        return o
 
 
 class FeatureNet(nn.Module):
