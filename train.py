@@ -7,7 +7,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import AdamW, Adam
 from models import FeatureNet, MetricNet
-from utils import AverageMeter
+from utils import AverageMeter, ErrorRateAt95Recall
 
 
 def ReadPairs(filename):
@@ -67,6 +67,7 @@ def run_epoch(model, dataloader, optimizer=None):
 
     loss_meter = AverageMeter()
     acc_meter = AverageMeter()
+
     for idx, (left, right, label) in enumerate(dataloader):
         left = preprocess(left).cuda()
         right = preprocess(right).cuda()
@@ -90,6 +91,8 @@ def run_epoch(model, dataloader, optimizer=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser('Train a MatchNet.')
+    parser.add_argument("--eval", action="store_true",
+                        help="Use in eval mode")
     parser.add_argument("--train_set", type=str,
                         default='liberty', help="data directory.")
     parser.add_argument("--test_set", type=str,
@@ -125,19 +128,38 @@ if __name__ == "__main__":
                              num_workers=8, pin_memory=True, drop_last=True)
 
     model = ComposedModel().cuda()
+    if args.eval:
+        state_dict = torch.load('model_{}.pt'.format(args.train_set))
+        model.load_state_dict(state_dict)
+        model.eval()
 
-    optimizer = AdamW(model.parameters(), lr=args.lr)
+        score_list = []
+        label_list = []
+        for idx, (left, right, label) in enumerate(test_loader):
+            left = preprocess(left).cuda()
+            right = preprocess(right).cuda()
+            label = label.cuda()
 
-    optimal_loss = 1e5
-    for epoch in range(args.n_epochs):
-        print('====> Epoch {}'.format(epoch + 1))
-        train_loss, train_acc = run_epoch(model, train_loader, optimizer=optimizer)
-        print('train loss: {:.4f}, train acc: {:.4f}'.format(train_loss, train_acc))
+            score = model(left, right)
+            score_list += list(score.cpu().numpy())
+            label_list += list(label.cpu().numpy())
 
-        test_loss, test_acc = run_epoch(model, test_loader)
-        print('test loss: {:.4f}, test acc: {:.4f}'.format(test_loss, test_acc))
+        err_rate = ErrorRateAt95Recall(labels=label_list, scores=score_list)
+        print('Error Rate 95% Recall: {:.4f}'.format(err_rate))
 
-        if train_loss < optimal_loss:
-            print('===> new optimal found.')
-            optimal_loss = train_loss
-            torch.save(model.state_dict(), 'model.pt')
+    else:
+        optimizer = AdamW(model.parameters(), lr=args.lr)
+
+        optimal_loss = 1e5
+        for epoch in range(args.n_epochs):
+            print('====> Epoch {}'.format(epoch + 1))
+            train_loss, train_acc = run_epoch(model, train_loader, optimizer=optimizer)
+            print('train loss: {:.4f}, train acc: {:.4f}'.format(train_loss, train_acc))
+
+            test_loss, test_acc = run_epoch(model, test_loader)
+            print('test loss: {:.4f}, test acc: {:.4f}'.format(test_loss, test_acc))
+
+            if train_loss < optimal_loss:
+                print('===> new optimal found.')
+                optimal_loss = train_loss
+                torch.save(model.state_dict(), 'model_{}.pt'.format(args.train_set))
