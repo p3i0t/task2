@@ -152,7 +152,6 @@ if __name__ == "__main__":
             score = F.softmax(score, dim=-1)[:, 1]
             score_list += list(score.cpu().detach().numpy())
             label_list += list(label.cpu().numpy())
-        print(score_list)
         err_rate = ErrorRateAt95Recall(labels=label_list, scores=score_list)
         print('Error Rate 95% Recall: {:.4f}'.format(err_rate))
 
