@@ -5,11 +5,9 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
-from torch.optim import AdamW, Adam
-from torchvision import transforms
-from models import FeatureNet, MetricNet
-from utils import AverageMeter, ErrorRateAt95Recall
-from PIL import Image
+from torch.optim import AdamW
+from models import FeatureNet, ResFeatureNet, MetricNet
+from utils import AverageMeter, ErrorRateAt95Recall, cal_parameters
 
 
 def ReadPairs(filename):
@@ -27,11 +25,14 @@ def ReadPairs(filename):
 
 
 class ComposedModel(nn.Module):
-    def __init__(self):
+    def __init__(self, residual=False):
         super().__init__()
-
-        self.feature_net = FeatureNet()
-        self.metric_net = MetricNet()
+        if residual:
+            self.feature_net = ResFeatureNet()
+            self.metric_net = MetricNet(in_dim=256)
+        else:
+            self.feature_net = FeatureNet()
+            self.metric_net = MetricNet(in_dim=4096)
 
     def forward(self, left, right):
         left = self.feature_net(left)
@@ -101,6 +102,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser('Train a MatchNet.')
     parser.add_argument("--eval", action="store_true",
                         help="Use in eval mode")
+    parser.add_argument("--res_feature_net", action="store_true",
+                        help="Use residual feature net if True.")
     parser.add_argument("--train_set", type=str,
                         default='liberty', help="train data directory.")
     parser.add_argument("--valid_set", type=str,
@@ -123,27 +126,6 @@ if __name__ == "__main__":
                         help="Base learning rate")
     args = parser.parse_args()
 
-    # def to_PIL_image(x):
-    #     x = np.squeeze(x, axis=0)
-    #     x = np.moveaxis(x, 0, -1)
-    #     return Image.fromarray(x)
-
-    # train_transform = transforms.Compose([
-    #     to_PIL_image,
-    #     transforms.Resize((64, 64)),
-    #     transforms.RandomCrop(64, padding=4),
-    #     transforms.RandomHorizontalFlip(),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.5,), (0.5,))  # 1-channel, scale to [-1, 1]
-    #     ])
-
-    # test_transform = transforms.Compose([
-    #     to_PIL_image,
-    #     transforms.Resize((64, 64)),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.5,), (0.5,))  # 1-channel, scale to [-1, 1]
-    #     ])
-
     # prepare train set
     pair_filename = os.path.join(args.train_set, 'm50_{}_{}_0.txt'.format(args.n_samples_train, args.n_samples_train))
     pairs, labels = ReadPairs(pair_filename)
@@ -164,9 +146,13 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_set, batch_size=100, shuffle=False,
                              num_workers=8, pin_memory=True, drop_last=True)
 
-    model = ComposedModel().cuda()
+    model = ComposedModel(residual=args.res_feature_net).cuda()
+
     if args.eval:
-        state_dict = torch.load('model_{}.pt'.format(args.train_set))
+        if args.res_feature_net:
+            state_dict = torch.load('res_model_{}.pt'.format(args.train_set))
+        else:
+            state_dict = torch.load('model_{}.pt'.format(args.train_set))
         model.load_state_dict(state_dict)
         model.eval()
 
@@ -202,4 +188,7 @@ if __name__ == "__main__":
             if valid_loss < optimal_loss:
                 print('===> new optimal found.')
                 optimal_loss = valid_loss
-                torch.save(model.state_dict(), 'model_{}.pt'.format(args.train_set))
+                if args.res_feature_net:
+                    torch.save(model.state_dict(), 'res_model_{}.pt'.format(args.train_set))
+                else:
+                    torch.save(model.state_dict(), 'model_{}.pt'.format(args.train_set))

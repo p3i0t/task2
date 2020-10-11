@@ -50,3 +50,8 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+
+def cal_parameters(model):
+    "calculate the total number of model parameters"
+    return sum(param.numel() for param in model.paramters())
