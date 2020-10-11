@@ -96,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_set", type=str,
                         default='liberty', help="train data directory.")
     parser.add_argument("--valid_set", type=str,
-                        default='yosimite', help="valid data directory.")
+                        default='yosemite', help="valid data directory.")
     parser.add_argument("--test_set", type=str,
                         default='notredame', help="data directory.")
     parser.add_argument("--n_samples_train", type=int,
