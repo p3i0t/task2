@@ -11,6 +11,7 @@ from models import FeatureNet, MetricNet
 from utils import AverageMeter, ErrorRateAt95Recall
 from PIL import Image
 
+
 def ReadPairs(filename):
     """Read pairs and match labels from the given file.
     """
@@ -63,7 +64,8 @@ class CustomDataset(Dataset):
 
 
 def preprocess(x):
-    return (x.float() - 128) / 160  # from original paper.
+    return x
+    # return (x.float() - 128) / 160  # from original paper.
 
 
 def run_epoch(model, dataloader, optimizer=None):
@@ -123,6 +125,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     def to_PIL_image(x):
+        x = np.squeeze(x, axis=0)
+        x = np.moveaxis(x, 0, -1)
         return Image.fromarray(x)
 
     train_transform = transforms.Compose([
