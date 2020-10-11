@@ -9,7 +9,7 @@ from torch.optim import AdamW, Adam
 from torchvision import transforms
 from models import FeatureNet, MetricNet
 from utils import AverageMeter, ErrorRateAt95Recall
-
+from PIL import Image
 
 def ReadPairs(filename):
     """Read pairs and match labels from the given file.
@@ -122,7 +122,11 @@ if __name__ == "__main__":
                         help="Base learning rate")
     args = parser.parse_args()
 
+    def to_PIL_image(x):
+        return Image.fromarray(x)
+
     train_transform = transforms.Compose([
+        to_PIL_image,
         transforms.Resize((64, 64)),
         transforms.RandomCrop(64, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -131,6 +135,7 @@ if __name__ == "__main__":
         ])
 
     test_transform = transforms.Compose([
+        to_PIL_image,
         transforms.Resize((64, 64)),
         transforms.ToTensor(),
         transforms.Normalize((0.5,), (0.5,))  # 1-channel, scale to [-1, 1]
