@@ -54,4 +54,4 @@ class AverageMeter(object):
 
 def cal_parameters(model):
     "calculate the total number of model parameters"
-    return sum(param.numel() for param in model.paramters())
+    return sum(param.numel() for param in model.parameters())

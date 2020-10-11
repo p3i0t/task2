@@ -93,5 +93,7 @@ if __name__ == "__main__":
     m = ResFeatureNet()
     o = m(x)
     print(o.size())
+    from utils import cal_parameters
+    print(cal_parameters(m))
 
 
