@@ -64,8 +64,7 @@ class CustomDataset(Dataset):
 
 
 def preprocess(x):
-    return x
-    # return (x.float() - 128) / 160  # from original paper.
+    return (x.float() - 128) / 160  # from original paper.
 
 
 def run_epoch(model, dataloader, optimizer=None):
@@ -124,10 +123,10 @@ if __name__ == "__main__":
                         help="Base learning rate")
     args = parser.parse_args()
 
-    def to_PIL_image(x):
-        x = np.squeeze(x, axis=0)
-        x = np.moveaxis(x, 0, -1)
-        return Image.fromarray(x)
+    # def to_PIL_image(x):
+    #     x = np.squeeze(x, axis=0)
+    #     x = np.moveaxis(x, 0, -1)
+    #     return Image.fromarray(x)
 
     # train_transform = transforms.Compose([
     #     to_PIL_image,
