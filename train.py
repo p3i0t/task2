@@ -94,7 +94,9 @@ if __name__ == "__main__":
     parser.add_argument("--eval", action="store_true",
                         help="Use in eval mode")
     parser.add_argument("--train_set", type=str,
-                        default='liberty', help="data directory.")
+                        default='liberty', help="train data directory.")
+    parser.add_argument("--valid_set", type=str,
+                        default='yosimite', help="valid data directory.")
     parser.add_argument("--test_set", type=str,
                         default='notredame', help="data directory.")
     parser.add_argument("--n_samples_train", type=int,
@@ -118,6 +120,12 @@ if __name__ == "__main__":
     pairs, labels = ReadPairs(pair_filename)
     train_set = CustomDataset(pairs, labels, args.train_set)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True,
+                              num_workers=8, pin_memory=True, drop_last=True)
+    
+    pair_filename = os.path.join(args.valid_set, 'm50_{}_{}_0.txt'.format(args.n_samples_test, args.n_samples_test))
+    pairs, labels = ReadPairs(pair_filename)
+    valid_set = CustomDataset(pairs, labels, args.valid_set)
+    valid_loader = DataLoader(valid_set, batch_size=100, shuffle=False,
                               num_workers=8, pin_memory=True, drop_last=True)
 
     # prepare test set
@@ -157,10 +165,13 @@ if __name__ == "__main__":
             train_loss, train_acc = run_epoch(model, train_loader, optimizer=optimizer)
             print('train loss: {:.4f}, train acc: {:.4f}'.format(train_loss, train_acc))
 
+            valid_loss, valid_acc = run_epoch(model, valid_loader)
+            print('valid loss: {:.4f}, valid acc: {:.4f}'.format(valid_loss, valid_acc))
+
             test_loss, test_acc = run_epoch(model, test_loader)
             print('test loss: {:.4f}, test acc: {:.4f}'.format(test_loss, test_acc))
 
-            if train_loss < optimal_loss:
+            if valid_loss < optimal_loss:
                 print('===> new optimal found.')
-                optimal_loss = train_loss
+                optimal_loss = valid_loss
                 torch.save(model.state_dict(), 'model_{}.pt'.format(args.train_set))
