@@ -42,6 +42,25 @@ class ComposedModel(nn.Module):
         return logits
 
 
+class DotProductdModel(nn.Module):
+    def __init__(self, residual=False):
+        super().__init__()
+        if residual:
+            self.feature_net = ResFeatureNet()
+            self.metric_net = MetricNet(in_dim=2048)
+        else:
+            self.feature_net = FeatureNet()
+            self.metric_net = MetricNet(in_dim=4096)
+
+    def forward(self, left, right):
+        left = F.normalize(self.feature_net(left), dim=1, p=2)
+        right = F.normalize(self.feature_net(right), dim=1, p=2)
+        # lr = torch.cat([left, right], dim=1)
+        # logits = self.metric_net(lr)
+        scores = (left * right).sum(dim=1)   # pairwise dot product, [-1, 1]
+        return scores
+
+
 class CustomDataset(Dataset):
     def __init__(self, pairs, labels, dataset='yosemite', transform=None):
         super().__init__()
@@ -82,6 +101,10 @@ def run_epoch(model, dataloader, optimizer=None):
         right = preprocess(right).cuda()
         label = label.cuda()
 
+        if optimizer:
+            lam = np.random.beta(0.5, 0.5)
+            left = lam * left + (1-lam) * right
+            right = lam * right + (1-lam) * left
         score = model(left, right)
         if optimizer:
             optimizer.zero_grad()

@@ -87,6 +87,20 @@ class MetricNet(nn.Module):
         return self.fc(x)
 
 
+class Projection(nn.Module):
+    def __init__(self, in_dim=4096, hidden_size=1024):
+        super(MetricNet, self).__init__()
+
+        self.fc = nn.Sequential(
+            nn.Linear(in_dim, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size)
+        )
+
+    def forward(self, x):
+        return self.fc(x)
+
+
 if __name__ == "__main__":
     x = torch.randn(1, 1, 64, 64)
     # m = FeatureNet()
