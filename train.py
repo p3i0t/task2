@@ -200,7 +200,7 @@ if __name__ == "__main__":
     else:
         optimizer = AdamW(model.parameters(), lr=args.lr)
 
-        optimal_err_rate = -1e5
+        optimal_err_rate = 1e5
         for epoch in range(args.n_epochs):
             print('====> Epoch {}'.format(epoch + 1))
             train_loss, train_err_rate = run_epoch(model, train_loader, optimizer=optimizer)
