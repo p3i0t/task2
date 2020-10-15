@@ -27,14 +27,15 @@ class BasicBlock(nn.Module):
 class ResFeatureNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.f1 = nn.Sequential(nn.Conv2d(1, 32, kernel_size=7, stride=1, padding=3),
-                                nn.BatchNorm2d(32),
-                                nn.ReLU())
+        self.f1 = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=7, stride=1, padding=3),
+            nn.BatchNorm2d(32),
+            nn.ReLU())
         self.res1 = BasicBlock(32, 64, stride=2)
         self.res2 = BasicBlock(64, 128, stride=2)
-        self.res3 = BasicBlock(128, 256, stride=2)
-        self.res4 = BasicBlock(256, 512, stride=2)
-        self.res5 = BasicBlock(512, 1024, stride=2)
+        self.res3 = BasicBlock(128, 128, stride=2)
+        self.res4 = BasicBlock(128, 256, stride=2)
+        # self.res5 = BasicBlock(512, 1024, stride=2)
         self.flatten = nn.Flatten()
 
     def forward(self, x):
@@ -43,7 +44,7 @@ class ResFeatureNet(nn.Module):
         o = self.res2(o)
         o = self.res3(o)
         o = self.res4(o)
-        o = self.res5(o)
+        # o = self.res5(o)
         o = self.flatten(o)
         return o
 
