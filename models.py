@@ -34,7 +34,7 @@ class ResFeatureNet(nn.Module):
         self.res2 = BasicBlock(64, 128, stride=2)
         self.res3 = BasicBlock(128, 256, stride=2)
         self.res4 = BasicBlock(256, 512, stride=2)
-        self.res4 = BasicBlock(512, 1024, stride=2)
+        self.res5 = BasicBlock(512, 1024, stride=2)
         self.flatten = nn.Flatten()
 
     def forward(self, x):
