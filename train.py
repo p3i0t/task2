@@ -106,13 +106,13 @@ def run_epoch(model, dataloader, optimizer=None):
         #     lam = np.random.beta(0.5, 0.5)
         #     left = lam * left + (1-lam) * right
         #     right = lam * right + (1-lam) * left
-        score = model(left, right)
-        score = F.softmax(score, dim=-1)[:, 1]
+        logits = model(left, right)
+        score = F.softmax(logits, dim=-1)[:, 1]
         score_list += list(score.cpu().detach().numpy())
 
         if optimizer:
             optimizer.zero_grad()
-        loss = F.cross_entropy(score, label)
+        loss = F.cross_entropy(logits, label)
 
         if optimizer:
             loss.backward()
