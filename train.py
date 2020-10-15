@@ -94,8 +94,9 @@ def run_epoch(model, dataloader, optimizer=None):
         model.train()  # train mode
 
     loss_meter = AverageMeter()
-    acc_meter = AverageMeter()
 
+    score_list = []
+    label_list = []
     for idx, (left, right, label) in enumerate(dataloader):
         left = preprocess(left).cuda()
         right = preprocess(right).cuda()
@@ -106,6 +107,9 @@ def run_epoch(model, dataloader, optimizer=None):
         #     left = lam * left + (1-lam) * right
         #     right = lam * right + (1-lam) * left
         score = model(left, right)
+        score = F.softmax(score, dim=-1)[:, 1]
+        score_list += list(score.cpu().detach().numpy())
+
         if optimizer:
             optimizer.zero_grad()
         loss = F.cross_entropy(score, label)
@@ -115,10 +119,9 @@ def run_epoch(model, dataloader, optimizer=None):
             optimizer.step()
 
         loss_meter.update(loss.cpu().item(), left.size(0))
-        acc = (score.argmax(dim=1) == label).float().cpu().mean().item()
-        acc_meter.update(acc, left.size(0))
-
-    return loss_meter.avg, acc_meter.avg
+        label_list += list(label.cpu().numpy())
+    err_rate = ErrorRateAt95Recall(labels=label_list, scores=score_list)
+    return loss_meter.avg, err_rate
 
 
 if __name__ == "__main__":
@@ -197,21 +200,21 @@ if __name__ == "__main__":
     else:
         optimizer = AdamW(model.parameters(), lr=args.lr)
 
-        optimal_loss = 1e5
+        optimal_err_rate = -1e5
         for epoch in range(args.n_epochs):
             print('====> Epoch {}'.format(epoch + 1))
-            train_loss, train_acc = run_epoch(model, train_loader, optimizer=optimizer)
-            print('train loss: {:.4f}, train acc: {:.4f}'.format(train_loss, train_acc))
+            train_loss, train_err_rate = run_epoch(model, train_loader, optimizer=optimizer)
+            print('train loss: {:.4f}, train err rate: {:.4f}'.format(train_loss, train_err_rate))
 
-            valid_loss, valid_acc = run_epoch(model, valid_loader)
-            print('valid loss: {:.4f}, valid acc: {:.4f}'.format(valid_loss, valid_acc))
+            valid_loss, valid_err_rate = run_epoch(model, valid_loader)
+            print('valid loss: {:.4f}, valid err rate: {:.4f}'.format(valid_loss, valid_err_rate))
 
-            test_loss, test_acc = run_epoch(model, test_loader)
-            print('test loss: {:.4f}, test acc: {:.4f}'.format(test_loss, test_acc))
+            test_loss, test_err_rate = run_epoch(model, test_loader)
+            print('test loss: {:.4f}, test err rate: {:.4f}'.format(test_loss, test_err_rate))
 
-            if valid_loss < optimal_loss:
+            if valid_err_rate < optimal_err_rate:
                 print('===> new optimal found.')
-                optimal_loss = valid_loss
+                optimal_err_rate = valid_err_rate
                 if args.res_feature_net:
                     torch.save(model.state_dict(), 'res_model_{}.pt'.format(args.train_set))
                 else:
